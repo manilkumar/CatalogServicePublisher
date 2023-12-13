@@ -19,12 +19,14 @@ namespace CatalogService.API.Controllers
         private readonly ILogger<CatalogController> logger;
         private readonly ICatalogRepository catalogRepository;
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IBus _bus;
+
         public CatalogController(ICatalogRepository catalogRepository, ILogger<CatalogController> logger
-            , IPublishEndpoint publishEndpoint)
+            , IBus bus)
         {
             this.catalogRepository = catalogRepository;
             this.logger = logger;
-            this._publishEndpoint = publishEndpoint;
+            _bus = bus;
         }
 
         // POST api/<CatalogController>
@@ -72,7 +74,11 @@ namespace CatalogService.API.Controllers
                 await catalogRepository.UpdateItem(entity);
 
                 // send checkout event to rabbitmq
-                await _publishEndpoint.Publish<Item>(entity);
+                //await _publishEndpoint.Publish<Item>(entity);
+
+                Uri uri = new Uri("rabbitmq://localhost/update-item-queue");
+                var endPoint = await _bus.GetSendEndpoint(uri);
+                await endPoint.Send(entity);
 
                 return Ok();
             }

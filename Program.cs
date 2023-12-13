@@ -24,12 +24,27 @@ builder.Services.AddSingleton(appSettings);
 
 // MassTransit-RabbitMQ Configuration
 builder.Services.AddMassTransit(config => {
-    config.UsingRabbitMq((ctx, cfg) => {
-        cfg.Host(appSettings.RabbitMQConnectionString);
-        cfg.UseHealthCheck(ctx);
-        cfg.UseMessageRetry(r => r.Immediate(3));
-    });
+    //config.UsingRabbitMq((ctx, cfg) => {
+    //    cfg.Host(appSettings.RabbitMQConnectionString);
+    //    cfg.UseHealthCheck(ctx);
+    //    cfg.UseMessageRetry(r => r.Immediate(3));
+    //});
+
+    config.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(config =>
+    {
+        config.UseHealthCheck(provider);
+        config.Host(new Uri("rabbitmq://localhost"), h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+    }));
 });
+
+
+
+
+
 builder.Services.AddMassTransitHostedService();
 
 
